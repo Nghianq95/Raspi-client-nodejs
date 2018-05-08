@@ -1,0 +1,103 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<script type="text/javascript" src="jquery.js"></script>
+<script type="text/javascript" src="socket.io/socket.io.js"></script>
+<script>
+	var socket=io('127.0.0.1:3000');
+window.onload = function () {
+
+var dpTemp = []; // dataPoints
+var dpHumd = [];
+var dpEC = [];
+var dppH = [];
+
+var chart = new CanvasJS.Chart("chartContainer", {
+	title :{
+		text: "Data"
+	},
+	axisY: {
+		includeZero: false
+	},
+	legend:{
+		cursor: "pointer",
+		fontSize: 16,
+		itemclick: toggleDataSeries
+	},
+
+	data: [{
+		name: "Nhiệt độ",
+		type: "line",
+		showInLegend: true,
+		dataPoints: dpTemp
+	},
+	{
+		name: "Độ ẩm",
+		type: "line",
+		showInLegend: true,
+		dataPoints: dpHumd
+	},
+	{
+		name: "EC",
+		type: "line",
+		showInLegend: true,
+		dataPoints: dpEC
+	},{
+		name: "pH",
+		type: "line",
+		showInLegend: true,
+		dataPoints: dppH
+	}]
+});
+
+var xVal = 0;
+
+var updateInterval = 5000;
+
+var updateChart = function (count) {
+		socket.on('server-send-data', (data)=>{
+			dpTemp.push({
+				x: xVal,
+				y: data.temp
+			});
+			dpHumd.push({
+				x: xVal,
+				y: data.humd
+			});
+			dpEC.push({
+				x: xVal,
+				y: data.EC
+			});
+			dppH.push({
+				x: xVal,
+				y: data.pH
+			});
+		});
+		xVal++;
+
+	chart.render();
+};
+function toggleDataSeries(e){
+	if (typeof(e.dataSeries.visible) === "undefined" || e.dataSeries.visible) {
+		e.dataSeries.visible = false;
+	}
+	else{
+		e.dataSeries.visible = true;
+    }
+	chart.render();
+}
+//updateChart(dataLength);
+setInterval(function(){updateChart()}, updateInterval);
+document.getElementById("button").addEventListener("click", function(){
+		chart.data[1].remove();
+    });
+}
+</script>
+</head>
+<body>
+<div id="chartContainer" style="width: 90%; height: 300px;"></div>
+<script src="https://canvasjs.com/assets/script/canvasjs.min.js"></script>
+<button id="button">Clear all</button>
+</body>
+</html>
+
